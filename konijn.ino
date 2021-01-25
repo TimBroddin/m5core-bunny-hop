@@ -22,6 +22,24 @@ void GetValue(void) {
 
 }
 
+int getBatteryLevel()
+{
+  Wire.beginTransmission(0x75);
+  Wire.write(0x78);
+  if (Wire.endTransmission(false) == 0
+      && Wire.requestFrom(0x75, 1)) {
+    switch (Wire.read() & 0xF0) {
+      case 0xE0: return 25;
+      case 0xC0: return 50;
+      case 0x80: return 75;
+      case 0x00: return 100;
+      default: return 0;
+    }
+  }
+  return -1;
+}
+
+
 void Led(int i, int r, int g, int b) {
   Wire.beginTransmission(Faces_Encoder_I2C_ADDR);
   Wire.write(i);
@@ -55,12 +73,10 @@ void setup() {
 
   M5.Lcd.drawJpg(splash, 100228);
   dacWrite(25, 0);
-
 }
 
 void loop() {
-  // put your main code here, to run repeatedly:
-  int i;
+  M5.update();
   GetValue();
 
   if (last_button != cur_button) {
@@ -68,8 +84,7 @@ void loop() {
   }
   if (cur_button) {
     colorWoosh(0, 0, 0, 0);
-  }
-  else {
+  } else {
     M5.Lcd.clear(WHITE);
 
     colorWoosh(0, 0, 0, 0);
@@ -92,6 +107,13 @@ void loop() {
 
       M5.Lcd.drawJpg(wortel, 30150);
     }
+  }
+
+  if (M5.BtnB.wasReleased() || M5.BtnB.pressedFor(1000, 200)) {
+    M5.Lcd.clear();
+    M5.Lcd.setCursor(0, 0);
+    M5.Lcd.setTextSize(5);
+    M5.Lcd.printf("Batterij: %d%%", getBatteryLevel());
   }
 
 }
